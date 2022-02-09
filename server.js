@@ -1,14 +1,6 @@
 const express = require("express");
 
-const { Pool } = require("pg");
-
-const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  user: "wiam",
-  password: "hello123",
-  database: "cyf_ecommerce",
-});
+const pool = require("./Pool");
 
 const cors = require("cors");
 
@@ -43,6 +35,13 @@ app.get("/", (req, res) => {
   return res
     .status(200)
     .send({ success: true, message: "Welcome to Wiam's ecommerce API" });
+});
+
+app.get("/*", (req, res) => {
+  res.status(400).json({
+    success: false,
+    msg: "Not within my API s reach...",
+  });
 });
 
 const PORT = process.env.PORT || 5000;
