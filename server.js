@@ -11,12 +11,26 @@ app.use(express.json());
 app.use(cors());
 
 app.get("/products", (req, res) => {
-  pool.query(
-    "SELECT products.product_name, product_availability.unit_price, suppliers.supplier_name FROM products INNER JOIN product_availability ON products.id = product_availability.prod_id INNER JOIN suppliers ON product_availability.supp_id = suppliers.id;",
-    (error, result) => {
-      res.json(result.rows);
-    }
-  );
+  const { name } = req.query;
+  let query =
+    "SELECT products.product_name, product_availability.unit_price, suppliers.supplier_name FROM products INNER JOIN product_availability ON products.id = product_availability.prod_id INNER JOIN suppliers ON product_availability.supp_id = suppliers.id ORDER BY products.product_name";
+
+  let params = [];
+
+  if (name) {
+    query =
+      "SELECT products.product_name, product_availability.unit_price, suppliers.supplier_name FROM products INNER JOIN product_availability ON products.id = product_availability.prod_id INNER JOIN suppliers ON product_availability.supp_id = suppliers.id WHERE products.product_name LIKE $1 ORDER BY products.product_name";
+
+    params.push(`%${name}%`);
+  }
+
+  pool
+    .query(query, params)
+    .then((result) => res.status(200).json(result.rows))
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json(error);
+    });
 });
 
 app.get("/suppliers", (req, res) => {
