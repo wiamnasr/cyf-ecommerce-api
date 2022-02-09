@@ -10,6 +10,51 @@ app.use(express.json());
 
 app.use(cors());
 
+app.post("/customers", (req, res) => {
+  const { customerName, address, city, country } = req.body;
+
+  if (!customerName.length) {
+    return res.status(400).send({
+      success: false,
+      message:
+        "Name field cannot be empty when adding a new customer, please fix and try again...",
+    });
+  }
+
+  pool
+    .query("SELECT * FROM customers WHERE name=$1", [customerName])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res
+          .status(400)
+          .send("A customer with the same name already exists");
+      } else {
+        const query =
+          "INSERT INTO customers (name, address,city,country) VALUES ($1, $2, $3, $4)";
+
+        pool
+          .query(query, [customerName, address, city, country])
+          .then(() => res.send("Customer Successfully added"))
+          .catch((error) => {
+            console.log(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
+
+app.get("/customers/:customerId", (req, res) => {
+  const { customerId } = req.params;
+
+  pool
+    .query("SELECT * FROM customers WHERE id=$1", [customerId])
+    .then((result) => res.json(result.rows))
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json(error);
+    });
+});
+
 app.get("/products", (req, res) => {
   const { name } = req.query;
   let query =
