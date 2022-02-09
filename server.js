@@ -10,6 +10,38 @@ app.use(express.json());
 
 app.use(cors());
 
+app.post("/products", (req, res) => {
+  const { productName } = req.body;
+
+  if (!productName.length) {
+    return res.status(400).send({
+      success: false,
+      message:
+        "product name field cannot be empty, please fix and try again...",
+    });
+  }
+
+  pool
+    .query("SELECT * FROM products WHERE product_name=$1", [productName])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res
+          .status(400)
+          .send("A product with the same name already exists");
+      } else {
+        const query = "INSERT INTO products (product_name) VALUES ($1)";
+
+        pool
+          .query(query, [productName])
+          .then(() => res.send("Product Successfully added"))
+          .catch((error) => {
+            console.log(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
+
 app.post("/customers", (req, res) => {
   const { customerName, address, city, country } = req.body;
 
